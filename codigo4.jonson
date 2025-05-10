@@ -1,0 +1,42 @@
+principal() {
+    entero[] numeros = [1, 2, 3]~
+    flotante temperatura = 36.5~
+    booleano activo = verdadero~
+    cadena mensaje = "Hola Mundo"~
+
+    //este es uncomentario
+
+    si (temperatura >= 37.5) {
+        imprimir("Temperatura alta")~
+    } sino {
+        imprimir("Temperatura normal")~
+    }
+
+    mientras(activo) {
+        para(entero i = 0; i != 3; i += 1) {
+        numeros[i] = numeros[i] * 2~
+    }
+        activo = falso~
+    }
+
+    imprimir(mensaje)~
+
+    entero opcion = 2~
+    
+    cambio(opcion) {
+        caso 1:
+            imprimir("Opcion 1 seleccionada")~
+            romper~
+        caso 2:
+            imprimir("Opcion 2 seleccionada")~
+            romper~
+        caso 3:
+            imprimir("Opcion 3 seleccionada")~
+            romper~
+        predeterminado:
+            imprimir("Opcion no valida")~
+    }
+    
+    cadena mensaje = "Fin del programa"~
+    imprimir(mensaje)~
+}

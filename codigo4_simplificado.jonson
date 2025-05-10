@@ -1,0 +1,16 @@
+principal() {
+    entero a = 10~
+    flotante b = 36.5~
+    
+    si (a > 5) {
+        imprimir("Valor mayor que 5")~
+    } sino {
+        imprimir("Valor menor o igual a 5")~
+    }
+    
+    mientras(a > 0) {
+        a = a - 1~
+    }
+    
+    imprimir("Fin")~
+} 

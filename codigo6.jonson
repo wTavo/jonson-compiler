@@ -1,0 +1,78 @@
+// Programa de ejemplo para probar el analizador sintáctico
+
+clase Persona {
+    privado cadena nombre~
+    publico entero edad~
+    
+    publico entero obtenerEdad() {
+        retornar edad~
+    }
+    
+    publico vacio establecerEdad(entero nuevaEdad) {
+        edad = nuevaEdad~
+    }
+}
+
+// Función principal del programa
+principal() {
+    // Declaración de variables
+    entero a = 5, b = 10~
+    flotante resultado~
+    
+    // Asignación con operación aritmética
+    resultado = (a + b) * 2.5~
+    
+    // Estructura condicional
+    si (resultado > 30) {
+        imprimir("El resultado es mayor que 30")~
+    } sino {
+        imprimir("El resultado es menor o igual que 30")~
+    }
+    
+    // Ciclo mientras
+    entero i = 0~
+    mientras (i < 5) {
+        imprimir("Iteración número: ")~
+        imprimir(i)~
+        i = i + 1~
+    }
+    
+    // Ciclo para
+    para (entero j = 0; j < 3; j = j + 1) {
+        imprimir("Ciclo para: ")~
+        imprimir(j)~
+    }
+    
+    // Ciclo hacer-mientras
+    entero k = 0~
+    hacer {
+        imprimir("Hacer mientras: ")~
+        imprimir(k)~
+        k = k + 1~
+    } mientras (k < 3)~
+    
+    // Estructura switch
+    cambio (a) {
+        caso 1:
+            imprimir("a es 1")~
+            romper~
+        caso 5:
+            imprimir("a es 5")~
+            romper~
+        predeterminado:
+            imprimir("a no es ni 1 ni 5")~
+    }
+    
+    // Creación de un objeto
+    Persona p~
+    p.nombre = "Juan"~
+    p.establecerEdad(25)~
+    
+    // Llamada a función
+    entero edadPersona = p.obtenerEdad()~
+    
+    // Operaciones booleanas
+    booleano condicion = (a > 0) AND (b < 20)~
+    
+    retornar 0~
+}
