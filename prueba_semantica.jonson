@@ -1,0 +1,45 @@
+principal() {
+    // Declaraciones correctas
+    entero a = 10~
+    flotante b = 20.5~
+    
+    // Error semántico: tipo incompatible en asignación
+    entero c = "Esto es una cadena"~
+    
+    // Error semántico: variable no declarada
+    d = 30~
+    
+    // Error semántico: operación entre tipos incompatibles
+    flotante resultado = a + "cadena"~
+    
+    // Error semántico: condición no booleana en if
+    si (a) {
+        imprimir("a es verdadero")~
+    }
+    
+    // Uso correcto de condicional
+    si (a > 5) {
+        imprimir("a es mayor que 5")~
+    } sino {
+        imprimir("a es menor o igual que 5")~
+    }
+    
+    // Error semántico: condición no booleana en while
+    mientras(b) {
+        b = b - 1.0~
+    }
+    
+    // Uso correcto de while
+    mientras(a > 0) {
+        a = a - 1~
+        imprimir(a)~
+    }
+    
+    // Error semántico: redeclaración de variable
+    entero a = 5~
+    
+    // Variable declarada pero no utilizada (advertencia)
+    entero x = 100~
+    
+    imprimir("Fin del programa")~
+} 

@@ -2,10 +2,12 @@ import ply.yacc as yacc
 from tokens import *
 
 class Node:
-    def __init__(self, type, children=None, leaf=None):
+    def __init__(self, type, children=None, leaf=None, line=0, column=0):
         self.type = type
         self.children = children if children else []
         self.leaf = leaf
+        self.line = line      # Línea donde se encuentra el nodo
+        self.column = column  # Columna donde se encuentra el nodo
 
     def __str__(self, level=0, is_last=False):
         # Prefijo para el nivel actual (espacios o líneas verticales)
@@ -20,6 +22,7 @@ class Node:
         ret = prefix + self.type
         if self.leaf is not None:
             ret += f": {self.leaf}"
+        ret += f" (línea: {self.line}, col: {self.column})" if self.line > 0 else ""
         ret += "\n"
         
         # Procesar hijos
@@ -164,21 +167,21 @@ class SyntaxAnalyzer:
                                | tipo_dato lista_ids_inicializadas CARAC_T
                                | tipo_dato ID ASIG array_literal CARAC_T'''
         if len(p) == 4 and isinstance(p[2], Node) and p[2].type == 'lista_ids':
-            p[0] = Node('declaracion_variable', [p[1], p[2]])
+            p[0] = Node('declaracion_variable', [p[1], p[2]], None, p.lineno(1), p.lexpos(1))
         elif len(p) == 6 and isinstance(p[4], Node) and p[4].type == 'array_literal':
-            p[0] = Node('declaracion_array', [p[1], Node('id', [], p[2]), p[4]])
+            p[0] = Node('declaracion_array', [p[1], Node('id', [], p[2], p.lineno(2), p.lexpos(2)), p[4]], None, p.lineno(1), p.lexpos(1))
         elif len(p) == 6:
-            p[0] = Node('declaracion_variable', [p[1], Node('id', [], p[2]), p[4]])
+            p[0] = Node('declaracion_variable', [p[1], Node('id', [], p[2], p.lineno(2), p.lexpos(2)), p[4]], None, p.lineno(1), p.lexpos(1))
         else:
-            p[0] = Node('declaracion_variable', [p[1], p[2]])
+            p[0] = Node('declaracion_variable', [p[1], p[2]], None, p.lineno(1), p.lexpos(1))
 
     def p_lista_ids(self, p):
         '''lista_ids : ID
                     | lista_ids COMA ID'''
         if len(p) == 2:
-            p[0] = Node('lista_ids', [Node('id', [], p[1])])
+            p[0] = Node('lista_ids', [Node('id', [], p[1], p.lineno(1), p.lexpos(1))], None, p.lineno(1), p.lexpos(1))
         else:
-            p[1].children.append(Node('id', [], p[3]))
+            p[1].children.append(Node('id', [], p[3], p.lineno(3), p.lexpos(3)))
             p[0] = p[1]
 
     def p_lista_ids_inicializadas(self, p):
@@ -197,9 +200,9 @@ class SyntaxAnalyzer:
                     | TIPO_DATO CORCHETE_IZQ CORCHETE_DER
                     | ID CORCHETE_IZQ CORCHETE_DER'''
         if len(p) == 2:
-            p[0] = Node('tipo_dato', [], p[1])
+            p[0] = Node('tipo_dato', [], p[1], p.lineno(1), p.lexpos(1))
         else:
-            p[0] = Node('tipo_array', [], p[1])  # Tipo de array
+            p[0] = Node('tipo_array', [], p[1], p.lineno(1), p.lexpos(1))  # Tipo de array
 
     def p_asignacion(self, p):
         '''asignacion : ID ASIG expresion CARAC_T
@@ -207,16 +210,16 @@ class SyntaxAnalyzer:
                      | ID ASIG_SUMA expresion CARAC_T
                      | ID CORCHETE_IZQ expresion CORCHETE_DER ASIG expresion CARAC_T'''
         if len(p) == 5:
-            p[0] = Node('asignacion', [Node('id', [], p[1]), p[3]])
+            p[0] = Node('asignacion', [Node('id', [], p[1], p.lineno(1), p.lexpos(1)), p[3]], None, p.lineno(1), p.lexpos(1))
         elif len(p) == 6 and isinstance(p[2], Node) and p[2].type == 'acceso_objeto':
-            id_node = Node('id', [], p[1])
+            id_node = Node('id', [], p[1], p.lineno(1), p.lexpos(1))
             id_node.children.append(p[2])
-            p[0] = Node('asignacion', [id_node, p[4]])
+            p[0] = Node('asignacion', [id_node, p[4]], None, p.lineno(1), p.lexpos(1))
         elif len(p) == 8:  # Asignación a elemento de array
-            acceso_array = Node('acceso_array', [Node('id', [], p[1]), p[3]])
-            p[0] = Node('asignacion', [acceso_array, p[6]])
+            acceso_array = Node('acceso_array', [Node('id', [], p[1], p.lineno(1), p.lexpos(1)), p[3]], None, p.lineno(1), p.lexpos(1))
+            p[0] = Node('asignacion', [acceso_array, p[6]], None, p.lineno(1), p.lexpos(1))
         else:
-            p[0] = Node('asignacion_compuesta', [Node('id', [], p[1]), p[3]], p[2])
+            p[0] = Node('asignacion_compuesta', [Node('id', [], p[1], p.lineno(1), p.lexpos(1)), p[3]], p[2], p.lineno(1), p.lexpos(1))
 
     def p_acceso_objeto(self, p):
         '''acceso_objeto : PUNTO ID
@@ -253,7 +256,10 @@ class SyntaxAnalyzer:
     def p_sentencia_if(self, p):
         '''sentencia_if : SI PAREN_IZQ expresion PAREN_DER bloque
                        | SI PAREN_IZQ expresion PAREN_DER bloque SINO bloque'''
-        p[0] = Node('sentencia_if', [p[3], p[5]] if len(p) == 6 else [p[3], p[5], p[7]])
+        if len(p) == 6:
+            p[0] = Node('sentencia_if', [p[3], p[5]], None, p.lineno(1), p.lexpos(1))
+        else:
+            p[0] = Node('sentencia_if', [p[3], p[5], p[7]], None, p.lineno(1), p.lexpos(1))
 
     def p_sentencia_switch(self, p):
         '''sentencia_switch : CAMBIO PAREN_IZQ expresion PAREN_DER LLAVE_IZQ casos_switch LLAVE_DER'''
@@ -284,7 +290,7 @@ class SyntaxAnalyzer:
 
     def p_sentencia_while(self, p):
         '''sentencia_while : MIENTRAS PAREN_IZQ expresion PAREN_DER bloque'''
-        p[0] = Node('sentencia_while', [p[3], p[5]])
+        p[0] = Node('sentencia_while', [p[3], p[5]], None, p.lineno(1), p.lexpos(1))
 
     def p_sentencia_do_while(self, p):
         '''sentencia_do_while : HACER bloque MIENTRAS PAREN_IZQ expresion PAREN_DER CARAC_T'''
@@ -318,7 +324,7 @@ class SyntaxAnalyzer:
 
     def p_sentencia_print(self, p):
         '''sentencia_print : IMPRIMIR PAREN_IZQ expresion PAREN_DER CARAC_T'''
-        p[0] = Node('sentencia_print', [p[3]])
+        p[0] = Node('sentencia_print', [p[3]], None, p.lineno(1), p.lexpos(1))
 
     def p_declaracion_metodo(self, p):
         '''declaracion_metodo : tipo_dato ID PAREN_IZQ parametros PAREN_DER bloque
@@ -380,7 +386,7 @@ class SyntaxAnalyzer:
         if len(p) == 2:
             p[0] = p[1]
         else:
-            p[0] = Node('expresion_aritmetica', [p[1], p[3]], p[2])
+            p[0] = Node('expresion_aritmetica', [p[1], p[3]], p[2], p.lineno(2), p.lexpos(2))
 
     def p_termino(self, p):
         '''termino : factor
@@ -407,22 +413,22 @@ class SyntaxAnalyzer:
         if len(p) == 4 and p[1] == '(':  # Paréntesis
             p[0] = p[2]
         elif len(p) == 5:  # Acceso a array
-            p[0] = Node('acceso_array', [Node('id', [], p[1]), p[3]])
+            p[0] = Node('acceso_array', [Node('id', [], p[1], p.lineno(1), p.lexpos(1)), p[3]], None, p.lineno(1), p.lexpos(1))
         elif len(p) == 2:
             if p.slice[1].type in ('NUM_ENTERO', 'NUM_FLOTANTE', 'CADENA'):
-                p[0] = Node('factor', [], p[1])
+                p[0] = Node('factor', [], p[1], p.lineno(1), p.lexpos(1))
             elif p.slice[1].type in ('VERDADERO', 'FALSO'):
-                p[0] = Node('booleano', [], p[1])
+                p[0] = Node('booleano', [], p[1], p.lineno(1), p.lexpos(1))
             elif isinstance(p[1], Node) and p[1].type == 'array_literal':
                 p[0] = p[1]
             elif p.slice[1].type == 'ID':
-                p[0] = Node('factor', [Node('id', [], p[1])])
+                p[0] = Node('factor', [Node('id', [], p[1], p.lineno(1), p.lexpos(1))], None, p.lineno(1), p.lexpos(1))
             else:
-                p[0] = Node('factor', [p[1]])
+                p[0] = Node('factor', [p[1]], None, p.lineno(1), p.lexpos(1))
         elif len(p) == 3:  # Acceso a objeto
-            id_node = Node('id', [], p[1])
+            id_node = Node('id', [], p[1], p.lineno(1), p.lexpos(1))
             id_node.children.append(p[2])
-            p[0] = Node('factor', [id_node])
+            p[0] = Node('factor', [id_node], None, p.lineno(1), p.lexpos(1))
 
     def p_llamada_metodo(self, p):
         '''llamada_metodo : ID PAREN_IZQ argumentos PAREN_DER
@@ -448,13 +454,40 @@ class SyntaxAnalyzer:
 
     def p_error(self, p):
         if p:
-            error_msg = f"Error de sintaxis en '{p.value}' en la línea {p.lineno}"
+            # Obtener el contexto de tokens para dar un error más descriptivo
+            expected_tokens = []
+            
+            # Intentar determinar qué tokens se esperaban
+            if hasattr(self.parser, 'symstack'):
+                state = self.parser.state
+                try:
+                    action = self.parser.action[state]
+                    for token_type, next_state in action.items():
+                        if next_state > 0:  # Solo consideramos acciones de shift
+                            if token_type in self.tokens:
+                                expected_tokens.append(token_type)
+                except:
+                    pass
+            
+            # Formatear mensaje de error
+            error_msg = f"Error de sintaxis en '{p.value}' (línea {p.lineno}, columna {p.lexpos})"
+            
+            # Añadir información sobre tokens esperados si está disponible
+            if expected_tokens:
+                error_msg += f"\nSe esperaba uno de los siguientes: {', '.join(expected_tokens)}"
+            
+            # Casos especiales de errores comunes
             if p.type == 'ERROR' and p.value == '~':
                 error_msg = f"Error: Espacio antes del carácter de terminación '~' en la línea {p.lineno}"
+            elif p.type == 'CARAC_T' and p.lexpos > 0:
+                error_msg = f"Error: Se encontró '{p.value}' en posición inesperada en la línea {p.lineno}"
+            elif p.type == 'LLAVE_DER' and self.parser.symstack[-2].type == 'bloque':
+                error_msg = f"Error: Posible falta de terminador '~' en alguna sentencia dentro del bloque (línea {p.lineno})"
+            
             self.errors.append(error_msg)
             print(error_msg)
         else:
-            error_msg = "Error de sintaxis al final del archivo"
+            error_msg = "Error de sintaxis al final del archivo. Posiblemente falta un terminador '~' o una llave de cierre '}'."
             self.errors.append(error_msg)
             print(error_msg)
             

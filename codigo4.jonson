@@ -37,6 +37,6 @@ principal() {
             imprimir("Opcion no valida")~
     }
     
-    cadena mensaje = "Fin del programa"~
+    mensaje = "Fin del programa"~
     imprimir(mensaje)~
 }
