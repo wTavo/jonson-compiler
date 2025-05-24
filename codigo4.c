@@ -18,7 +18,7 @@ int main() {
     temperatura = 36.5;
     activo = true;
     strcpy(mensaje, "Hola Mundo");
-    if ((temperatura >= 37.5)) {
+    if ((temperatura >= "37.5")) {
         printf("%s\n", "Temperatura alta");
     } else {
         printf("%s\n", "Temperatura normal");

@@ -377,7 +377,7 @@ class SyntaxAnalyzer:
         if len(p) == 2:
             p[0] = p[1]
         else:
-            p[0] = Node('expresion_relacional', [p[1], p[3]], p[2])
+            p[0] = Node('expresion_relacional', [p[1], p[3]], p[2], p.lineno(2), p.lexpos(2))
 
     def p_expresion_aritmetica(self, p):
         '''expresion_aritmetica : termino
